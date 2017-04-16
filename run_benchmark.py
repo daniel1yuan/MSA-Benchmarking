@@ -110,7 +110,8 @@ def save_json(storage, file_path):
 #Software Functions: define functions for all software
 def mafft_prog(ref, unalign):
   storage_dir = make_dir(os.path.join(results_dir, "mafft_proj"))
-  exe = os.path.join(software_dir, "mafft", "scripts", "mafft")
+  #exe = os.path.join(software_dir, "mafft", "scripts", "mafft")
+  exe = "mafft"
   est = os.path.join(storage_dir, "estimated_alignment")
   time_taken = time_func(exe + " --retree 1 " + unalign + " > " + est)
   results = benchmark(ref, est, storage_dir)
@@ -118,7 +119,8 @@ def mafft_prog(ref, unalign):
 
 def mafft_iter(ref, unalign):
   storage_dir = make_dir(os.path.join(results_dir, "mafft_iter"))
-  exe = os.path.join(software_dir, "mafft", "scripts", "mafft")
+  #exe = os.path.join(software_dir, "mafft", "scripts", "mafft")
+  exe = "mafft"
   est = os.path.join(storage_dir, "estimated_alignment")
   time_taken = time_func(exe + " --localpair --maxiterate 1000 " + unalign + " > " + est)
   results = benchmark(ref, est, storage_dir)
