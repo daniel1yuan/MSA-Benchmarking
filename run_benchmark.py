@@ -45,9 +45,13 @@ def make_dir(path):
     os.makedirs(path)
   return path
 
+# Extracts reference name from path
+def getRef(path):
+  return os.path.basename(path)
+
 # Runs FastSP and extracts results for a reference and 
 def benchmark(ref, est, storage):
-  benchmark_file = os.path.join(storage, "fastSP_results")
+  benchmark_file = os.path.join(storage, "fastSP_results" + getRef(ref))
   jar_file = os.path.join(software_dir, "FastSP", "FastSP.jar")
   call("java -jar " + jar_file + " -r " + ref + " -e " + est + " > " + benchmark_file, shell=True)
   results = parse_benchmark(benchmark_file)
@@ -111,7 +115,7 @@ def save_json(storage, file_path):
 def mafft_prog(ref, unalign):
   storage_dir = make_dir(os.path.join(results_dir, "mafft_proj"))
   exe = os.path.join(software_dir, "mafft", "scripts", "mafft")
-  est = os.path.join(storage_dir, "estimated_alignment")
+  est = os.path.join(storage_dir, "estimated_alignment" + getRef(ref))
   time_taken = time_func(exe + " --retree 1 " + unalign + " > " + est)
   results = benchmark(ref, est, storage_dir)
   return {"time": time_taken, "results": results}
@@ -119,7 +123,7 @@ def mafft_prog(ref, unalign):
 def mafft_iter(ref, unalign):
   storage_dir = make_dir(os.path.join(results_dir, "mafft_iter"))
   exe = os.path.join(software_dir, "mafft", "scripts", "mafft")
-  est = os.path.join(storage_dir, "estimated_alignment")
+  est = os.path.join(storage_dir, "estimated_alignment" + getRef(ref))
   time_taken = time_func(exe + " --localpair --maxiterate 1000 " + unalign + " > " + est)
   results = benchmark(ref, est, storage_dir)
   return {"time": time_taken, "results": results}
@@ -127,27 +131,28 @@ def mafft_iter(ref, unalign):
 def muscle(ref, unalign):
   storage_dir = make_dir(os.path.join(results_dir, "muscle"))
   exe = os.path.join(software_dir, "MUSCLE", "muscle")
-  est = os.path.join(storage_dir, "estimated_alignment")
+  est = os.path.join(storage_dir, "estimated_alignment" + getRef(ref))
   time_taken = time_func(exe + " -in " + unalign + " -out " + est)
-  results = benchmark(ref, est, storage_dir)
-  return {"time": time_taken, "results": results}
-
-def PRRN(ref, unalign):
-  storage_dir = make_dir(os.path.join(results_dir, "PRRN"))
-  exe = os.path.join(software_dir, "PRRN", "bin", "prrn")
-  est = os.path.join(storage_dir, "estimated_alignment")
-  time_taken = time_func(exe + " -FN " + unalign + " > " + est)
   results = benchmark(ref, est, storage_dir)
   return {"time": time_taken, "results": results}
 
 def T_coffee(ref, unalign):
   storage_dir = make_dir(os.path.join(results_dir, "T-Coffee"))
   exe = os.path.join(software_dir, "T-coffee", "bin", "t_coffee")
-  est = os.path.join(storage_dir, "estimated_alignment")
+  est = os.path.join(storage_dir, "estimated_alignment" + getRef(ref))
   time_taken = time_func(exe + " -in " + unalign + " -output fasta_aln -outfile " + est)
   results = benchmark(ref, est, storage_dir)
   return {"time": time_taken, "results": results}
+
+def clustal(ref, unalign):
+  storage_dir = make_dir(os.path.join(results_dir, "Clustal"))
+  exe = os.path.join(software_dir, "Clustal", "clustal")
+  est = os.path.join(storage_dir, "estimated_alignment" + getRef(ref))
+  time_taken = time_func(exe + " -i " + unalign + " -o " + est)
+  results = benchmark(ref, est, storage_dir)
+  return {"time": time_taken, "results": results}
   
+
 #Main Function
 def main():
   # Unalign all sequence in source folder and put them in unaligned folder
@@ -156,23 +161,23 @@ def main():
   storage = {
     "mafft_prog": {},
     "mafft_iter": {},
-    "PRRN": {},
+    "MUSCLE": {},
     "T-COFFEE": {},
-    "PSAlign": {},
-    "MUSCLE": {}
+    "CLUSTAL": {}
   }
   # Run All software on all unaligned datasets
   for seq in unaligned_seq:
     ref = seq["source_path"]
     unalign_path = seq["unalign_path"]
     name = seq["name"]
-
-    pdb.set_trace()
-
+    
     #Add Results for all software for this sequence
     storage["mafft_prog"][name] = mafft_prog(ref, unalign_path)
+    storage["mafft_iter"][name] = mafft_iter(ref, unalign_path)
+    storage["MUSCLE"][name] = muscle(ref, unalign_path)
+    storage["T-COFFEE"][name] = T_coffee(ref, unalign_path)
+    storage["CLUSTAL"][name] = clustal(ref, unalign_path)
  
-
   # Average Results for all datasets
   avg_results(storage)
   # Save results to json file for each viewing
